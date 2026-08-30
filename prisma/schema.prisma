@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum FieldType {
+  CALCETTO
+  PADEL
+  TENNIS
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentType {
+  ACCONTO
+  SALDO
+  INTERO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  passwordHash  String
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+
+  bookings         Booking[]
+  sentMessages     Message[] @relation("MessagesSent")
+
+  @@index([email])
+}
+
+model Field {
+  id               String    @id @default(cuid())
+  type             FieldType @unique
+  name             String
+  description      String?
+  pricePerHour     Float
+  depositPercent   Int       @default(30)
+  openingHour      Int       @default(8)
+  closingHour      Int       @default(23)
+  slotMinutes      Int       @default(60)
+  createdAt        DateTime  @default(now())
+
+  bookings Booking[]
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  field         Field         @relation(fields: [fieldId], references: [id])
+  fieldId       String
+  user          User          @relation(fields: [userId], references: [id])
+  userId        String
+  date          String
+  startTime     String
+  endTime       String
+  durationHours Float
+  totalPrice    Float
+  depositAmount Float
+  amountPaid    Float         @default(0)
+  status        BookingStatus @default(PENDING_PAYMENT)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  payments Payment[]
+  messages Message[]
+
+  @@unique([fieldId, date, startTime])
+  @@index([fieldId, date])
+  @@index([userId])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+  bookingId         String
+  amount            Float
+  type              PaymentType
+  status            PaymentStatus @default(PENDING)
+  stripeSessionId   String?       @unique
+  createdAt         DateTime      @default(now())
+  paidAt            DateTime?
+
+  @@index([bookingId])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  bookingId  String
+  sender     User     @relation("MessagesSent", fields: [senderId], references: [id])
+  senderId   String
+  fromAdmin  Boolean  @default(false)
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([bookingId])
+}
