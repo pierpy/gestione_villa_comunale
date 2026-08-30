@@ -38,7 +38,9 @@ export async function getBookingDetailPayload(
         id: p.id,
         amount: p.amount,
         type: p.type,
+        method: p.method,
         status: p.status,
+        reference: p.reference,
         createdAt: p.createdAt.toISOString(),
       })),
       messages: booking.messages.map((m) => ({

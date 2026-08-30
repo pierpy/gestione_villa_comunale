@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getBookingDetailPayload } from "@/lib/bookings";
+import { getBankDetails } from "@/lib/bankTransfer";
 import BookingDetail from "@/components/BookingDetail";
 
 export default async function BookingDetailPage({
@@ -24,6 +25,7 @@ export default async function BookingDetailPage({
       <BookingDetail
         booking={result.booking}
         viewAs={isAdmin && !isOwner ? "admin" : "user"}
+        bankDetails={getBankDetails()}
       />
     </div>
   );

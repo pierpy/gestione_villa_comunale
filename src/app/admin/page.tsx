@@ -15,7 +15,7 @@ export default async function AdminPage({
   if (status) where.status = status;
   if (date) where.date = date;
 
-  const [bookings, fields] = await Promise.all([
+  const [bookings, fields, pendingBankTransfers] = await Promise.all([
     prisma.booking.findMany({
       where,
       include: {
@@ -26,6 +26,7 @@ export default async function AdminPage({
       take: 100,
     }),
     prisma.field.findMany(),
+    prisma.payment.count({ where: { method: "BONIFICO", status: "PENDING" } }),
   ]);
 
   const pendingCount = bookings.filter((b) => b.status === "PENDING_PAYMENT").length;
@@ -38,13 +39,18 @@ export default async function AdminPage({
         Tutte le prenotazioni sui campi della Villa Comunale.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard label="Totale" value={bookings.length} />
         <StatCard label="In attesa" value={pendingCount} />
         <StatCard label="Confermate" value={confirmedCount} />
         <StatCard
           label="Incassato"
           value={formatEuro(bookings.reduce((sum, b) => sum + b.amountPaid, 0))}
+        />
+        <StatCard
+          label="Bonifici da confermare"
+          value={pendingBankTransfers}
+          highlight={pendingBankTransfers > 0}
         />
       </div>
 
@@ -154,11 +160,35 @@ export default async function AdminPage({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-medium uppercase text-slate-400">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
+    <div
+      className={`rounded-xl border p-4 ${
+        highlight ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white"
+      }`}
+    >
+      <p
+        className={`text-xs font-medium uppercase ${
+          highlight ? "text-amber-700" : "text-slate-400"
+        }`}
+      >
+        {label}
+      </p>
+      <p
+        className={`mt-1 text-xl font-semibold ${
+          highlight ? "text-amber-900" : "text-slate-900"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

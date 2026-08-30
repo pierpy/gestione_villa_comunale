@@ -17,3 +17,16 @@ export const FIELD_TYPE_LABELS: Record<string, string> = {
   PADEL: "Padel",
   TENNIS: "Tennis",
 };
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  STRIPE: "Carta (online)",
+  BONIFICO: "Bonifico bancario",
+  CONTANTI: "Contanti",
+};
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  PENDING: "In attesa",
+  PAID: "Pagato",
+  FAILED: "Rifiutato",
+  REFUNDED: "Rimborsato",
+};

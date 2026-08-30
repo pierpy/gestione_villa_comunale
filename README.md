@@ -14,12 +14,17 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
   **Stripe Checkout**. Se le chiavi Stripe non sono configurate, l'app usa un
   flusso di pagamento "demo" che marca il pagamento come effettuato subito
   (utile in sviluppo/dimostrazione).
+- Pagamento alternativo tramite **bonifico bancario**: l'utente riceve IBAN e
+  causale univoca, dichiara di aver effettuato il bonifico e l'amministratore
+  lo conferma manualmente dal pannello admin una volta ricevuto l'accredito
+  (zero commissioni, nessun account su un provider esterno).
 - Dashboard utente con le proprie prenotazioni, stato del pagamento e
   possibilità di annullare.
 - Pannello amministratore con vista di tutte le prenotazioni (filtrabili per
   campo, stato e data), gestione dello stato delle prenotazioni,
-  registrazione di pagamenti manuali (es. contanti in loco) e messaggistica
-  diretta con l'utente che ha prenotato.
+  registrazione di pagamenti manuali (es. contanti in loco), conferma/rifiuto
+  dei bonifici in attesa e messaggistica diretta con l'utente che ha
+  prenotato.
 
 ## Stack tecnico
 
@@ -87,6 +92,32 @@ Per abilitare i pagamenti reali con carta:
    `STRIPE_WEBHOOK_SECRET` con il segreto generato da Stripe.
 3. Riavvia l'app: da questo momento i pulsanti di pagamento reindirizzano a
    Stripe Checkout invece di usare il flusso demo.
+
+## Configurare il bonifico bancario (opzionale)
+
+Per offrire il bonifico come alternativa gratuita a Stripe, valorizza in
+`.env`:
+
+```
+BANK_IBAN="IT..."
+BANK_INTESTATARIO="Nome dell'ente/associazione"
+BANK_ISTITUTO="Nome della banca"  # facoltativo
+```
+
+Se `BANK_IBAN` non è impostato, l'opzione bonifico semplicemente non compare
+nell'app. Quando è attiva, il flusso è:
+
+1. L'utente sceglie "Paga con bonifico bancario" per l'acconto, il saldo o
+   l'intero importo: l'app genera una causale univoca e mostra IBAN,
+   intestatario e importo da versare.
+2. L'utente effettua il bonifico dalla propria banca (nessuna commissione per
+   voi che lo ricevete).
+3. L'amministratore, dal pannello admin sulla prenotazione interessata,
+   controlla l'estratto conto e preme "Conferma ricevuto": la prenotazione si
+   aggiorna automaticamente (o "Rifiuta" se il bonifico non risulta arrivato).
+
+Il pannello admin mostra anche un contatore "Bonifici da confermare" per non
+perdere le richieste in sospeso.
 
 ## Note sui dati
 

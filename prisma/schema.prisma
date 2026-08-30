@@ -38,6 +38,12 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentMethod {
+  STRIPE
+  BONIFICO
+  CONTANTI
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -100,7 +106,9 @@ model Payment {
   bookingId         String
   amount            Float
   type              PaymentType
+  method            PaymentMethod @default(STRIPE)
   status            PaymentStatus @default(PENDING)
+  reference         String?
   stripeSessionId   String?       @unique
   createdAt         DateTime      @default(now())
   paidAt            DateTime?

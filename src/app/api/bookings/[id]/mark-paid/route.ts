@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { roundToCents } from "@/lib/pricing";
+import { computePaymentAmountForType, roundToCents } from "@/lib/pricing";
 
 export async function POST(
   request: Request,
@@ -28,23 +28,9 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const type = body.type as "ACCONTO" | "SALDO" | "INTERO" | undefined;
 
-  let amount: number;
-  if (booking.amountPaid <= 0 && type === "INTERO") {
-    amount = roundToCents(booking.totalPrice - booking.amountPaid);
-  } else if (booking.amountPaid <= 0 && type === "ACCONTO") {
-    amount = roundToCents(booking.depositAmount - booking.amountPaid);
-  } else if (
-    booking.amountPaid > 0 &&
-    booking.amountPaid < booking.totalPrice &&
-    type === "SALDO"
-  ) {
-    amount = roundToCents(booking.totalPrice - booking.amountPaid);
-  } else {
+  const amount = computePaymentAmountForType(booking, type);
+  if (amount === null || !type) {
     return NextResponse.json({ error: "Tipo di pagamento non valido" }, { status: 400 });
-  }
-
-  if (amount <= 0) {
-    return NextResponse.json({ error: "Nessun importo da pagare" }, { status: 400 });
   }
 
   await prisma.payment.create({
@@ -52,6 +38,7 @@ export async function POST(
       bookingId: booking.id,
       amount,
       type,
+      method: "CONTANTI",
       status: "PAID",
       paidAt: new Date(),
     },
