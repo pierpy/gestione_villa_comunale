@@ -25,6 +25,10 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
   registrazione di pagamenti manuali (es. contanti in loco), conferma/rifiuto
   dei bonifici in attesa e messaggistica diretta con l'utente che ha
   prenotato.
+- Gestione utenti: un amministratore può promuovere qualsiasi utente
+  registrato ad amministratore (o togliergli il ruolo) da "Admin → Gestisci
+  utenti". La registrazione pubblica crea sempre account normali, per
+  sicurezza: solo un admin già esistente può crearne altri.
 
 ## Stack tecnico
 

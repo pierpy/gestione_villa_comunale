@@ -34,10 +34,20 @@ export default async function AdminPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">Pannello amministratore</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Tutte le prenotazioni sui campi della Villa Comunale.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Pannello amministratore</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Tutte le prenotazioni sui campi della Villa Comunale.
+          </p>
+        </div>
+        <Link
+          href="/admin/utenti"
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
+        >
+          Gestisci utenti →
+        </Link>
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard label="Totale" value={bookings.length} />
