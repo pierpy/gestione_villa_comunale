@@ -11,6 +11,9 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
   precisione (di default ogni 15 minuti, es. 14:15) e non solo alle ore
   esatte — la granularità è configurabile per campo (`Field.slotMinutes`
   in `prisma/seed.ts`).
+- Panoramica settimanale (7 giorni × ore) sopra il calendario del giorno,
+  per vedere a colpo d'occhio quali giorni/orari sono già occupati prima
+  di scegliere la data su cui prenotare nel dettaglio.
 - Prenotazione di una fascia libera, con calcolo automatico di prezzo totale
   e acconto richiesto in base alla durata scelta.
 - Pagamento online dell'acconto, del saldo o dell'intero importo tramite

@@ -106,3 +106,53 @@ export function generateDayAvailability(
 function minutesToTime(minutes: number) {
   return addMinutesToTime("00:00", minutes);
 }
+
+export type HourCellStatus = "free" | "booked" | "past";
+
+export interface WeekDayOverview {
+  date: string;
+  cells: { hour: number; status: HourCellStatus }[];
+}
+
+/**
+ * Vista d'insieme su più giorni: per ogni ora del giorno indica solo se è
+ * libera, occupata o passata (senza dettaglio sulle singole prenotazioni),
+ * utile per farsi un'idea rapida di quali giorni/orari sono più liberi
+ * prima di scegliere la data su cui prenotare nel dettaglio.
+ */
+export function generateWeekOverview(
+  field: FieldForSlots,
+  weekDates: string[],
+  bookingsByDate: Record<string, BookingForSlots[]>,
+  nowIso: string
+): WeekDayOverview[] {
+  const now = new Date(nowIso).getTime();
+
+  return weekDates.map((date) => {
+    const activeBookings = (bookingsByDate[date] ?? []).filter(
+      (b) => b.status !== "CANCELLED"
+    );
+
+    const cells: WeekDayOverview["cells"] = [];
+    for (let hour = field.openingHour; hour < field.closingHour; hour++) {
+      const cellStartMinutes = hour * 60;
+      const cellEndMinutes = cellStartMinutes + 60;
+
+      const cellEndDateTime = new Date(`${date}T${minutesToTime(cellEndMinutes)}:00`);
+      const isPast = cellEndDateTime.getTime() <= now;
+
+      const overlapping = activeBookings.some(
+        (b) =>
+          timeToMinutes(b.startTime) < cellEndMinutes &&
+          timeToMinutes(b.endTime) > cellStartMinutes
+      );
+
+      cells.push({
+        hour,
+        status: isPast ? "past" : overlapping ? "booked" : "free",
+      });
+    }
+
+    return { date, cells };
+  });
+}

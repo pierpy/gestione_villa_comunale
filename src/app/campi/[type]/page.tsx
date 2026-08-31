@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, addDays, parseISO } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { slugToFieldType, FIELD_TYPE_TO_SLUG } from "@/lib/fields";
-import { generateDayAvailability } from "@/lib/slots";
+import { generateDayAvailability, generateWeekOverview, type BookingForSlots } from "@/lib/slots";
 import { formatEuro } from "@/lib/pricing";
 import { expireStaleBookings } from "@/lib/bookings";
 import FieldCalendar from "@/components/FieldCalendar";
+import WeekOverview from "@/components/WeekOverview";
 
 const FIELD_EMOJI: Record<string, string> = {
   CALCETTO: "⚽",
@@ -40,25 +41,39 @@ export default async function FieldPage({
 
   await expireStaleBookings();
 
-  const bookings = await prisma.booking.findMany({
-    where: { fieldId: field.id, date },
+  const weekDates = Array.from({ length: 7 }, (_, i) =>
+    format(addDays(parseISO(date), i), "yyyy-MM-dd")
+  );
+
+  const weekBookings = await prisma.booking.findMany({
+    where: { fieldId: field.id, date: { in: weekDates } },
     include: { user: { select: { id: true, name: true } } },
   });
 
-  const blocks = generateDayAvailability(
-    field,
-    date,
-    bookings.map((b) => ({
+  const bookingsByDate: Record<string, BookingForSlots[]> = {};
+  for (const d of weekDates) bookingsByDate[d] = [];
+  for (const b of weekBookings) {
+    bookingsByDate[b.date]?.push({
       id: b.id,
       startTime: b.startTime,
       endTime: b.endTime,
       status: b.status,
       userId: b.userId,
       userName: b.user.name,
-    })),
+    });
+  }
+
+  const nowIso = new Date().toISOString();
+
+  const blocks = generateDayAvailability(
+    field,
+    date,
+    bookingsByDate[date] ?? [],
     session?.user.id,
-    new Date().toISOString()
+    nowIso
   );
+
+  const weekOverview = generateWeekOverview(field, weekDates, bookingsByDate, nowIso);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
@@ -104,6 +119,8 @@ export default async function FieldPage({
           </div>
         </div>
       </div>
+
+      <WeekOverview slugPath={type} weekDays={weekOverview} selectedDate={date} />
 
       <FieldCalendar
         field={field}
