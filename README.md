@@ -132,8 +132,10 @@ Ogni push sul branch collegato aggiorna automaticamente il sito online.
 
 Per abilitare i pagamenti reali con carta:
 
-1. Crea un account Stripe e recupera `STRIPE_SECRET_KEY` e
-   `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` dalla dashboard.
+1. Crea un account Stripe e recupera `STRIPE_SECRET_KEY` dalla dashboard
+   (Sviluppatori → Chiavi API). Il pagamento usa Stripe Checkout in modalità
+   redirect gestito interamente lato server: non serve alcuna chiave
+   pubblicabile lato browser.
 2. Configura un endpoint webhook verso `/api/webhooks/stripe` e imposta
    `STRIPE_WEBHOOK_SECRET` con il segreto generato da Stripe.
 3. Riavvia l'app: da questo momento i pulsanti di pagamento reindirizzano a
