@@ -74,8 +74,12 @@ export async function POST(request: Request) {
     );
   }
 
+  // Margine di tolleranza: uno slot libero può iniziare "adesso" al momento
+  // in cui la pagina viene caricata, ma l'utente impiega qualche minuto a
+  // scegliere durata e note prima di inviare la richiesta.
+  const BOOKING_GRACE_MS = 5 * 60 * 1000;
   const requestedStart = new Date(`${date}T${startTime}:00`);
-  if (requestedStart.getTime() < Date.now()) {
+  if (requestedStart.getTime() < Date.now() - BOOKING_GRACE_MS) {
     return NextResponse.json(
       { error: "Non puoi prenotare uno slot nel passato" },
       { status: 400 }

@@ -21,13 +21,15 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
   causale univoca, dichiara di aver effettuato il bonifico e l'amministratore
   lo conferma manualmente dal pannello admin una volta ricevuto l'accredito
   (zero commissioni, nessun account su un provider esterno).
+- Pagamento alternativo **in contanti all'arrivo**: l'utente prenota
+  dichiarando che pagherà di persona al campo; l'amministratore conferma
+  l'incasso dal pannello admin quando lo riceve.
 - Dashboard utente con le proprie prenotazioni, stato del pagamento e
   possibilità di annullare.
 - Pannello amministratore con vista di tutte le prenotazioni (filtrabili per
   campo, stato e data), gestione dello stato delle prenotazioni,
-  registrazione di pagamenti manuali (es. contanti in loco), conferma/rifiuto
-  dei bonifici in attesa e messaggistica diretta con l'utente che ha
-  prenotato.
+  registrazione di pagamenti manuali, conferma/rifiuto dei bonifici e
+  contanti in attesa, e messaggistica diretta con l'utente che ha prenotato.
 - Gestione utenti: un amministratore può promuovere qualsiasi utente
   registrato ad amministratore (o togliergli il ruolo) da "Admin → Gestisci
   utenti". La registrazione pubblica crea sempre account normali, per

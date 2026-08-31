@@ -78,6 +78,9 @@ export default function BookingDetail({
   const pendingBankTransfer = booking.payments.find(
     (p) => p.method === "BONIFICO" && p.status === "PENDING"
   );
+  const pendingCashPayment = booking.payments.find(
+    (p) => p.method === "CONTANTI" && p.status === "PENDING"
+  );
 
   async function pay(type: "ACCONTO" | "SALDO" | "INTERO") {
     setError(null);
@@ -132,6 +135,23 @@ export default function BookingDetail({
     setPayLoading(false);
     if (!res.ok) {
       setError(data.error || "Errore durante la richiesta di bonifico");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function requestCashPayment(type: "ACCONTO" | "SALDO" | "INTERO") {
+    setError(null);
+    setPayLoading(true);
+    const res = await fetch(`/api/bookings/${booking.id}/cash-intent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setPayLoading(false);
+    if (!res.ok) {
+      setError(data.error || "Errore durante la richiesta");
       return;
     }
     router.refresh();
@@ -354,6 +374,7 @@ export default function BookingDetail({
                     amount={booking.depositAmount}
                     onPayCard={() => pay("ACCONTO")}
                     onPayBank={bankDetails ? () => requestBankTransfer("ACCONTO") : undefined}
+                    onPayCash={() => requestCashPayment("ACCONTO")}
                     loading={payLoading}
                     primary
                   />
@@ -362,6 +383,7 @@ export default function BookingDetail({
                     amount={booking.totalPrice}
                     onPayCard={() => pay("INTERO")}
                     onPayBank={bankDetails ? () => requestBankTransfer("INTERO") : undefined}
+                    onPayCash={() => requestCashPayment("INTERO")}
                     loading={payLoading}
                   />
                 </>
@@ -372,6 +394,7 @@ export default function BookingDetail({
                   amount={remaining}
                   onPayCard={() => pay("SALDO")}
                   onPayBank={bankDetails ? () => requestBankTransfer("SALDO") : undefined}
+                  onPayCash={() => requestCashPayment("SALDO")}
                   loading={payLoading}
                   primary
                 />
@@ -400,6 +423,19 @@ export default function BookingDetail({
                   emphasized
                 />
               </div>
+            </div>
+          )}
+
+          {viewAs === "user" && pendingCashPayment && (
+            <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm">
+              <p className="font-medium text-amber-900">
+                Pagamento in contanti da confermare ({formatEuro(pendingCashPayment.amount)})
+              </p>
+              <p className="mt-1 text-amber-800">
+                Presentati al campo e paga {formatEuro(pendingCashPayment.amount)} allo staff.
+                La prenotazione sarà confermata non appena l&apos;amministratore registra
+                l&apos;incasso.
+              </p>
             </div>
           )}
 
@@ -471,7 +507,9 @@ export default function BookingDetail({
                   {p.reference && (
                     <p className="mt-0.5 text-xs text-slate-400">Causale: {p.reference}</p>
                   )}
-                  {viewAs === "admin" && p.method === "BONIFICO" && p.status === "PENDING" && (
+                  {viewAs === "admin" &&
+                    (p.method === "BONIFICO" || p.method === "CONTANTI") &&
+                    p.status === "PENDING" && (
                     <div className="mt-2 flex gap-2">
                       <button
                         onClick={() => handlePaymentAction(p.id, "confirm")}
@@ -504,6 +542,7 @@ function PaymentTypeChoice({
   amount,
   onPayCard,
   onPayBank,
+  onPayCash,
   loading,
   primary,
 }: {
@@ -511,6 +550,7 @@ function PaymentTypeChoice({
   amount: number;
   onPayCard: () => void;
   onPayBank?: () => void;
+  onPayCash?: () => void;
   loading: boolean;
   primary?: boolean;
 }) {
@@ -538,6 +578,16 @@ function PaymentTypeChoice({
           {label} con bonifico bancario
         </button>
       )}
+      {onPayCash && (
+        <button
+          onClick={onPayCash}
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+        >
+          <CashIcon />
+          {label} in contanti all&apos;arrivo
+        </button>
+      )}
     </div>
   );
 }
@@ -557,6 +607,16 @@ function BankIcon() {
       <path d="M4 10.5 12 5l8 5.5" />
       <path d="M5 10.5v7.5M9.5 10.5v7.5M14.5 10.5v7.5M19 10.5v7.5" />
       <path d="M4 19.5h16" />
+    </svg>
+  );
+}
+
+function CashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2.5" y="6.5" width="19" height="11" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M5.5 9v0M18.5 15v0" />
     </svg>
   );
 }
