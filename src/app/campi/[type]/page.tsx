@@ -1,11 +1,18 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { slugToFieldType } from "@/lib/fields";
+import { slugToFieldType, FIELD_TYPE_TO_SLUG } from "@/lib/fields";
 import { generateDaySlots } from "@/lib/slots";
 import { formatEuro } from "@/lib/pricing";
 import FieldCalendar from "@/components/FieldCalendar";
+
+const FIELD_EMOJI: Record<string, string> = {
+  CALCETTO: "⚽",
+  PADEL: "🎾",
+  TENNIS: "🏸",
+};
 
 export default async function FieldPage({
   params,
@@ -28,6 +35,7 @@ export default async function FieldPage({
     : format(new Date(), "yyyy-MM-dd");
 
   const session = await auth();
+  const allFields = await prisma.field.findMany({ orderBy: { type: "asc" } });
 
   const bookings = await prisma.booking.findMany({
     where: { fieldId: field.id, date },
@@ -50,16 +58,48 @@ export default async function FieldPage({
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">{field.name}</h1>
-        {field.description && (
-          <p className="mt-1 text-slate-600">{field.description}</p>
-        )}
-        <p className="mt-2 text-sm text-slate-500">
-          {formatEuro(field.pricePerHour)} / ora · acconto {field.depositPercent}% ·
-          orario {field.openingHour}:00 - {field.closingHour}:00
-        </p>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
+      <div className="mb-5 flex gap-1.5 overflow-x-auto sm:hidden">
+        {allFields.map((f) => {
+          const isActive = f.type === fieldType;
+          const slug = FIELD_TYPE_TO_SLUG[f.type];
+          return (
+            <Link
+              key={f.id}
+              href={`/campi/${slug}`}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium ${
+                isActive
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white text-slate-600 border border-slate-200"
+              }`}
+            >
+              {FIELD_EMOJI[f.type]} {FIELD_TYPE_TO_SLUG[f.type][0].toUpperCase() + FIELD_TYPE_TO_SLUG[f.type].slice(1)}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="mb-6 flex items-start gap-3">
+        <span className="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
+          {FIELD_EMOJI[field.type]}
+        </span>
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{field.name}</h1>
+          {field.description && (
+            <p className="mt-1 text-sm text-slate-600 sm:text-base">{field.description}</p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+              {formatEuro(field.pricePerHour)} / ora
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+              Acconto {field.depositPercent}%
+            </span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+              {field.openingHour}:00 - {field.closingHour}:00
+            </span>
+          </div>
+        </div>
       </div>
 
       <FieldCalendar

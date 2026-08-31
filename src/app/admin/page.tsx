@@ -115,57 +115,97 @@ export default async function AdminPage({
         </Link>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Campo</th>
-              <th className="px-4 py-3">Data / Ora</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Pagato</th>
-              <th className="px-4 py-3">Stato</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
+      {bookings.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-400">
+          Nessuna prenotazione trovata.
+        </div>
+      ) : (
+        <>
+          {/* Schede: vista mobile */}
+          <ul className="mt-6 space-y-3 sm:hidden">
             {bookings.map((b) => (
-              <tr key={b.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  <Link
-                    href={`/admin/prenotazioni/${b.id}`}
-                    className="font-medium text-emerald-700 hover:underline"
-                  >
-                    {FIELD_TYPE_LABELS[b.field.type]}
-                  </Link>
-                </td>
-                <td className="px-4 py-3">
-                  {b.date} · {b.startTime}-{b.endTime}
-                </td>
-                <td className="px-4 py-3">
-                  <div>{b.user.name}</div>
-                  <div className="text-xs text-slate-400">{b.user.email}</div>
-                </td>
-                <td className="px-4 py-3">
-                  {formatEuro(b.amountPaid)} / {formatEuro(b.totalPrice)}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[b.status]}`}
-                  >
-                    {STATUS_LABELS[b.status]}
-                  </span>
-                </td>
-              </tr>
+              <li key={b.id}>
+                <Link
+                  href={`/admin/prenotazioni/${b.id}`}
+                  className="block rounded-xl border border-slate-200 bg-white p-4 active:bg-slate-50"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {FIELD_TYPE_LABELS[b.field.type]}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {b.date} · {b.startTime}-{b.endTime}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[b.status]}`}
+                    >
+                      {STATUS_LABELS[b.status]}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-end justify-between border-t border-slate-100 pt-3">
+                    <div>
+                      <p className="text-sm text-slate-700">{b.user.name}</p>
+                      <p className="text-xs text-slate-400">{b.user.email}</p>
+                    </div>
+                    <p className="text-sm font-medium text-slate-900">
+                      {formatEuro(b.amountPaid)}
+                      <span className="text-slate-400"> / {formatEuro(b.totalPrice)}</span>
+                    </p>
+                  </div>
+                </Link>
+              </li>
             ))}
-            {bookings.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
-                  Nessuna prenotazione trovata.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          </ul>
+
+          {/* Tabella: vista desktop */}
+          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white sm:block">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Campo</th>
+                  <th className="px-4 py-3">Data / Ora</th>
+                  <th className="px-4 py-3">Cliente</th>
+                  <th className="px-4 py-3">Pagato</th>
+                  <th className="px-4 py-3">Stato</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {bookings.map((b) => (
+                  <tr key={b.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/prenotazioni/${b.id}`}
+                        className="font-medium text-emerald-700 hover:underline"
+                      >
+                        {FIELD_TYPE_LABELS[b.field.type]}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      {b.date} · {b.startTime}-{b.endTime}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>{b.user.name}</div>
+                      <div className="text-xs text-slate-400">{b.user.email}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatEuro(b.amountPaid)} / {formatEuro(b.totalPrice)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[b.status]}`}
+                      >
+                        {STATUS_LABELS[b.status]}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

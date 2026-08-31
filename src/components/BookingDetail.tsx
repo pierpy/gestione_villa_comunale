@@ -515,28 +515,49 @@ function PaymentTypeChoice({
   primary?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <button
         onClick={onPayCard}
         disabled={loading}
         className={
           primary
-            ? "w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-            : "w-full rounded-md border border-emerald-600 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+            ? "flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60"
+            : "flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
         }
       >
+        <CardIcon />
         {label} con carta ({formatEuro(amount)})
       </button>
       {onPayBank && (
         <button
           onClick={onPayBank}
           disabled={loading}
-          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60"
         >
+          <BankIcon />
           {label} con bonifico bancario
         </button>
       )}
     </div>
+  );
+}
+
+function CardIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5.5" width="18" height="13" rx="2" />
+      <path d="M3 9.5h18M6 14.5h4" />
+    </svg>
+  );
+}
+
+function BankIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 10.5 12 5l8 5.5" />
+      <path d="M5 10.5v7.5M9.5 10.5v7.5M14.5 10.5v7.5M19 10.5v7.5" />
+      <path d="M4 19.5h16" />
+    </svg>
   );
 }
 

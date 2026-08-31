@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import Header from "@/components/Header";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +30,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <SessionProviderWrapper>
           <Header />
-          <main className="flex-1">{children}</main>
-          <footer className="border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500">
+          <main className="flex-1 pb-20 md:pb-0">{children}</main>
+          <footer className="hidden border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500 md:block">
             Villa Comunale di Torre de&apos; Passeri — Prenotazione campi sportivi
           </footer>
+          <MobileBottomNav />
         </SessionProviderWrapper>
       </body>
     </html>
