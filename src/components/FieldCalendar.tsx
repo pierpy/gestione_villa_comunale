@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, addDays, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
-import type { SlotInfo } from "@/lib/slots";
-import { formatEuro } from "@/lib/pricing";
+import type { AvailabilityBlock } from "@/lib/slots";
+import { formatEuro, formatDuration, timeToMinutes, addMinutesToTime } from "@/lib/pricing";
 
 interface FieldSummary {
   id: string;
@@ -19,50 +19,70 @@ interface Props {
   field: FieldSummary;
   slugPath: string;
   date: string;
-  slots: SlotInfo[];
+  blocks: AvailabilityBlock[];
   isLoggedIn: boolean;
   isAdmin: boolean;
 }
+
+const MAX_BOOKING_HOURS = 6;
 
 export default function FieldCalendar({
   field,
   slugPath,
   date,
-  slots,
+  blocks,
   isLoggedIn,
   isAdmin,
 }: Props) {
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState("");
   const [durationHours, setDurationHours] = useState(1);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const slotsPerHour = 60 / field.slotMinutes;
+  const selectedBlock = selectedIndex !== null ? blocks[selectedIndex] : null;
 
-  const maxDurationForSelected = useMemo(() => {
-    if (selectedIndex === null) return 0;
-    let count = 0;
-    for (let i = selectedIndex; i < slots.length; i++) {
-      if (slots[i].status !== "free") break;
-      count++;
+  const durationOptions = useMemo(() => {
+    if (!selectedBlock || !startTime) return [];
+    const remainingMinutes = timeToMinutes(selectedBlock.end) - timeToMinutes(startTime);
+    const step = field.slotMinutes;
+    const options: number[] = [];
+    for (
+      let minutes = step;
+      minutes <= remainingMinutes && minutes <= MAX_BOOKING_HOURS * 60;
+      minutes += step
+    ) {
+      options.push(minutes / 60);
     }
-    return count / slotsPerHour;
-  }, [selectedIndex, slots, slotsPerHour]);
+    return options;
+  }, [selectedBlock, startTime, field.slotMinutes]);
 
   function goToDate(newDate: string) {
     router.push(`/campi/${slugPath}?date=${newDate}`);
   }
 
-  function selectSlot(index: number) {
+  function selectBlock(index: number) {
     setError(null);
     setSelectedIndex(index);
-    setDurationHours(1);
+    const block = blocks[index];
+    setStartTime(block.start);
+    setDurationHours(field.slotMinutes / 60 >= 1 ? field.slotMinutes / 60 : 1);
+  }
+
+  function handleStartTimeChange(value: string) {
+    setStartTime(value);
+    if (!selectedBlock) return;
+    const remainingMinutes = timeToMinutes(selectedBlock.end) - timeToMinutes(value);
+    const maxHours = Math.min(remainingMinutes / 60, MAX_BOOKING_HOURS);
+    if (durationHours > maxHours) {
+      setDurationHours(Math.max(field.slotMinutes / 60, Math.floor(maxHours * 4) / 4));
+    }
   }
 
   async function submitBooking() {
-    if (selectedIndex === null) return;
+    if (!selectedBlock || !startTime) return;
     setError(null);
     setLoading(true);
 
@@ -72,7 +92,7 @@ export default function FieldCalendar({
       body: JSON.stringify({
         fieldId: field.id,
         date,
-        startTime: slots[selectedIndex].start,
+        startTime,
         durationHours,
         notes,
       }),
@@ -92,6 +112,7 @@ export default function FieldCalendar({
 
   const totalPrice = field.pricePerHour * durationHours;
   const deposit = (totalPrice * field.depositPercent) / 100;
+  const endTime = startTime ? addMinutesToTime(startTime, durationHours * 60) : "";
 
   const displayDate = format(parseISO(date), "EEEE d MMMM yyyy", { locale: it });
 
@@ -103,7 +124,7 @@ export default function FieldCalendar({
             {displayDate}
           </h2>
           <p className="text-sm text-slate-500">
-            Orari mostrati con slot da {field.slotMinutes} minuti
+            Puoi scegliere l&apos;orario di inizio con incrementi di {field.slotMinutes} minuti
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -128,64 +149,59 @@ export default function FieldCalendar({
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-        {slots.map((slot, index) => {
+      <div className="mt-6 space-y-2">
+        {blocks.map((block, index) => {
           const isSelected = selectedIndex === index;
-          const base =
-            "rounded-lg border px-3 py-3 text-sm text-left transition focus:outline-none";
 
-          if (slot.status === "past") {
+          if (block.status === "past") {
             return (
               <div
-                key={slot.start}
-                className={`${base} border-slate-100 bg-slate-50 text-slate-300`}
+                key={`${block.start}-${index}`}
+                className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-300"
               >
-                {slot.start} - {slot.end}
-                <div className="text-xs">Passato</div>
+                {block.start} - {block.end} · Passato
               </div>
             );
           }
 
-          if (slot.status === "booked") {
+          if (block.status === "booked") {
             return (
               <div
-                key={slot.start}
-                className={`${base} border-red-100 bg-red-50 text-red-700`}
-                title={isAdmin ? slot.ownerName : undefined}
+                key={`${block.start}-${index}`}
+                className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700"
+                title={isAdmin ? block.ownerName : undefined}
               >
-                {slot.start} - {slot.end}
-                <div className="text-xs">
-                  {slot.isMine
-                    ? "La tua prenotazione"
-                    : isAdmin
-                    ? slot.ownerName
-                    : "Occupato"}
-                </div>
+                <span className="font-medium">{block.start} - {block.end}</span>
+                {" · "}
+                {block.isMine ? "La tua prenotazione" : isAdmin ? block.ownerName : "Occupato"}
               </div>
             );
           }
 
           return (
             <button
-              key={slot.start}
-              onClick={() => selectSlot(index)}
-              className={`${base} ${
+              key={`${block.start}-${index}`}
+              onClick={() => selectBlock(index)}
+              className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${
                 isSelected
                   ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
                   : "border-emerald-200 bg-white hover:border-emerald-400 hover:bg-emerald-50"
               }`}
             >
-              {slot.start} - {slot.end}
-              <div className="text-xs text-emerald-700">Libero</div>
+              <span className="font-medium text-slate-900">{block.start} - {block.end}</span>
+              <span className="ml-2 text-emerald-700">Libero</span>
             </button>
           );
         })}
+        {blocks.length === 0 && (
+          <p className="text-sm text-slate-400">Nessuno slot disponibile per questo giorno.</p>
+        )}
       </div>
 
-      {selectedIndex !== null && (
+      {selectedBlock && (
         <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50/60 p-5">
           <h3 className="font-semibold text-slate-900">
-            Prenota dalle {slots[selectedIndex].start}
+            Prenota nella fascia {selectedBlock.start} - {selectedBlock.end}
           </h3>
 
           {!isLoggedIn ? (
@@ -202,23 +218,43 @@ export default function FieldCalendar({
             </p>
           ) : (
             <div className="mt-3 space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Durata</label>
-                <select
-                  value={durationHours}
-                  onChange={(e) => setDurationHours(Number(e.target.value))}
-                  className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-                >
-                  {Array.from(
-                    { length: Math.max(1, Math.floor(maxDurationForSelected)) },
-                    (_, i) => i + 1
-                  ).map((h) => (
-                    <option key={h} value={h}>
-                      {h} {h === 1 ? "ora" : "ore"}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-wrap gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">
+                    Orario di inizio
+                  </label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    min={selectedBlock.start}
+                    max={addMinutesToTime(selectedBlock.end, -field.slotMinutes)}
+                    step={field.slotMinutes * 60}
+                    onChange={(e) => handleStartTimeChange(e.target.value)}
+                    className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">Durata</label>
+                  <select
+                    value={durationHours}
+                    onChange={(e) => setDurationHours(Number(e.target.value))}
+                    className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+                  >
+                    {durationOptions.map((h) => (
+                      <option key={h} value={h}>
+                        {formatDuration(h)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              {startTime && endTime && (
+                <p className="text-sm text-slate-600">
+                  Dalle <span className="font-medium">{startTime}</span> alle{" "}
+                  <span className="font-medium">{endTime}</span>
+                </p>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700">
@@ -251,7 +287,7 @@ export default function FieldCalendar({
               <div className="flex gap-2">
                 <button
                   onClick={submitBooking}
-                  disabled={loading}
+                  disabled={loading || durationOptions.length === 0}
                   className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
                 >
                   {loading ? "Prenotazione..." : "Conferma prenotazione"}

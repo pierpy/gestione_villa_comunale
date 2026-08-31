@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatEuro } from "@/lib/pricing";
+import { formatEuro, formatDuration } from "@/lib/pricing";
 import {
   STATUS_LABELS,
   STATUS_STYLES,
@@ -216,7 +216,7 @@ export default function BookingDetail({
                 {FIELD_TYPE_LABELS[booking.field.type]} — {booking.date}
               </h1>
               <p className="text-slate-600">
-                {booking.startTime} - {booking.endTime} ({booking.durationHours}h)
+                {booking.startTime} - {booking.endTime} ({formatDuration(booking.durationHours)})
               </p>
             </div>
             <span

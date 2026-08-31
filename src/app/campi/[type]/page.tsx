@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { slugToFieldType, FIELD_TYPE_TO_SLUG } from "@/lib/fields";
-import { generateDaySlots } from "@/lib/slots";
+import { generateDayAvailability } from "@/lib/slots";
 import { formatEuro } from "@/lib/pricing";
 import FieldCalendar from "@/components/FieldCalendar";
 
@@ -42,7 +42,7 @@ export default async function FieldPage({
     include: { user: { select: { id: true, name: true } } },
   });
 
-  const slots = generateDaySlots(
+  const blocks = generateDayAvailability(
     field,
     date,
     bookings.map((b) => ({
@@ -106,7 +106,7 @@ export default async function FieldPage({
         field={field}
         slugPath={type}
         date={date}
-        slots={slots}
+        blocks={blocks}
         isLoggedIn={!!session}
         isAdmin={session?.user.role === "ADMIN"}
       />

@@ -16,7 +16,7 @@ export const bookingSchema = z.object({
   fieldId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data non valida"),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "Orario non valido"),
-  durationHours: z.number().min(0.5).max(6),
+  durationHours: z.number().min(0.1).max(6),
   notes: z.string().max(500).optional().or(z.literal("")),
 });
 

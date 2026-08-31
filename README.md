@@ -6,10 +6,13 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
 ## Funzionalità
 
 - Registrazione e accesso utenti (email + password).
-- Calendario giornaliero per ciascun campo con slot liberi/occupati e
-  navigazione tra i giorni.
-- Prenotazione di uno slot libero, con calcolo automatico di prezzo totale e
-  acconto richiesto.
+- Calendario giornaliero per ciascun campo con fasce libere/occupate e
+  navigazione tra i giorni. L'orario di inizio si può scegliere con
+  precisione (di default ogni 15 minuti, es. 14:15) e non solo alle ore
+  esatte — la granularità è configurabile per campo (`Field.slotMinutes`
+  in `prisma/seed.ts`).
+- Prenotazione di una fascia libera, con calcolo automatico di prezzo totale
+  e acconto richiesto in base alla durata scelta.
 - Pagamento online dell'acconto, del saldo o dell'intero importo tramite
   **Stripe Checkout**. Se le chiavi Stripe non sono configurate, l'app usa un
   flusso di pagamento "demo" che marca il pagamento come effettuato subito

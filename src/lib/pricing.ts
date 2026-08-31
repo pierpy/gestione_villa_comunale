@@ -19,7 +19,7 @@ export function formatEuro(amount: number) {
 
 export function addMinutesToTime(time: string, minutes: number) {
   const [h, m] = time.split(":").map(Number);
-  const total = h * 60 + m + minutes;
+  const total = h * 60 + m + Math.round(minutes);
   const hh = Math.floor(total / 60)
     .toString()
     .padStart(2, "0");
@@ -30,6 +30,15 @@ export function addMinutesToTime(time: string, minutes: number) {
 export function timeToMinutes(time: string) {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
+}
+
+export function formatDuration(hours: number) {
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}min`;
 }
 
 export type PaymentTypeOption = "ACCONTO" | "SALDO" | "INTERO";

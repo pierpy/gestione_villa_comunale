@@ -10,6 +10,7 @@ async function main() {
     description: string;
     pricePerHour: number;
     depositPercent: number;
+    slotMinutes: number;
   }> = [
     {
       type: "CALCETTO",
@@ -17,6 +18,7 @@ async function main() {
       description: "Campo a 5 in erba sintetica, illuminazione notturna.",
       pricePerHour: 30,
       depositPercent: 30,
+      slotMinutes: 15,
     },
     {
       type: "PADEL",
@@ -24,6 +26,7 @@ async function main() {
       description: "Campo da padel coperto con pareti in vetro.",
       pricePerHour: 20,
       depositPercent: 30,
+      slotMinutes: 15,
     },
     {
       type: "TENNIS",
@@ -31,13 +34,17 @@ async function main() {
       description: "Campo da tennis in terra rossa.",
       pricePerHour: 15,
       depositPercent: 30,
+      slotMinutes: 15,
     },
   ];
 
   for (const field of fields) {
     await prisma.field.upsert({
       where: { type: field.type },
-      update: {},
+      // Solo slotMinutes viene risincronizzato sui campi già esistenti:
+      // gli altri valori (prezzo, descrizione...) restano quelli attuali
+      // nel database, così eventuali modifiche manuali non vengono perse.
+      update: { slotMinutes: field.slotMinutes },
       create: field,
     });
   }
