@@ -32,8 +32,23 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const type = body.type as "ACCONTO" | "SALDO" | "INTERO" | undefined;
 
+  // L'acconto (o l'intero importo) che sblocca la prenotazione deve sempre
+  // arrivare da un pagamento reale online (carta o bonifico): i contanti
+  // possono coprire solo il saldo rimanente su una prenotazione già
+  // confermata da un acconto, altrimenti chiunque potrebbe bloccare uno
+  // slot senza alcun impegno economico.
+  if (type !== "SALDO") {
+    return NextResponse.json(
+      {
+        error:
+          "L'acconto va pagato con carta o bonifico per confermare la prenotazione. I contanti si possono usare solo per il saldo rimanente.",
+      },
+      { status: 400 }
+    );
+  }
+
   const amount = computePaymentAmountForType(booking, type);
-  if (amount === null || !type) {
+  if (amount === null) {
     return NextResponse.json({ error: "Tipo di pagamento non valido" }, { status: 400 });
   }
 

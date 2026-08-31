@@ -21,9 +21,18 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
   causale univoca, dichiara di aver effettuato il bonifico e l'amministratore
   lo conferma manualmente dal pannello admin una volta ricevuto l'accredito
   (zero commissioni, nessun account su un provider esterno).
-- Pagamento alternativo **in contanti all'arrivo**: l'utente prenota
-  dichiarando che pagherà di persona al campo; l'amministratore conferma
-  l'incasso dal pannello admin quando lo riceve.
+- Pagamento alternativo **in contanti all'arrivo**, ma solo per il **saldo**
+  rimanente su una prenotazione già confermata: l'acconto che sblocca la
+  prenotazione deve sempre passare da un pagamento online (carta o
+  bonifico), altrimenti chiunque potrebbe occupare uno slot senza alcun
+  impegno economico. L'amministratore conferma l'incasso in contanti dal
+  pannello admin quando lo riceve.
+- **Scadenza automatica** delle prenotazioni rimaste "in attesa di
+  pagamento" senza che sia mai arrivato un pagamento reale: dopo 30 minuti
+  vengono annullate automaticamente e lo slot torna libero (i bonifici
+  dichiarati hanno una tolleranza di 48 ore, per dare il tempo reale al
+  bonifico di arrivare). Non serve un job pianificato: il controllo scatta
+  da solo alla prima pagina caricata da qualcuno dopo la scadenza.
 - Dashboard utente con le proprie prenotazioni, stato del pagamento e
   possibilità di annullare.
 - Pannello amministratore con vista di tutte le prenotazioni (filtrabili per

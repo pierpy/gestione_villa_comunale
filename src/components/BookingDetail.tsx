@@ -374,7 +374,6 @@ export default function BookingDetail({
                     amount={booking.depositAmount}
                     onPayCard={() => pay("ACCONTO")}
                     onPayBank={bankDetails ? () => requestBankTransfer("ACCONTO") : undefined}
-                    onPayCash={() => requestCashPayment("ACCONTO")}
                     loading={payLoading}
                     primary
                   />
@@ -383,9 +382,13 @@ export default function BookingDetail({
                     amount={booking.totalPrice}
                     onPayCard={() => pay("INTERO")}
                     onPayBank={bankDetails ? () => requestBankTransfer("INTERO") : undefined}
-                    onPayCash={() => requestCashPayment("INTERO")}
                     loading={payLoading}
                   />
+                  <p className="text-xs text-slate-500">
+                    L&apos;acconto conferma subito la prenotazione: va pagato online (carta o
+                    bonifico). Il saldo rimanente potrai pagarlo anche in contanti
+                    all&apos;arrivo.
+                  </p>
                 </>
               )}
               {booking.amountPaid > 0 && (
@@ -433,8 +436,8 @@ export default function BookingDetail({
               </p>
               <p className="mt-1 text-amber-800">
                 Presentati al campo e paga {formatEuro(pendingCashPayment.amount)} allo staff.
-                La prenotazione sarà confermata non appena l&apos;amministratore registra
-                l&apos;incasso.
+                Il saldo verrà registrato come pagato non appena l&apos;amministratore
+                conferma l&apos;incasso.
               </p>
             </div>
           )}

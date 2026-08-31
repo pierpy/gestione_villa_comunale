@@ -3,10 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 import { STATUS_LABELS, STATUS_STYLES, FIELD_TYPE_LABELS } from "@/lib/status";
+import { expireStaleBookings } from "@/lib/bookings";
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session) return null;
+
+  await expireStaleBookings();
 
   const bookings = await prisma.booking.findMany({
     where: { userId: session.user.id },

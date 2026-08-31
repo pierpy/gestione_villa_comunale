@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { slugToFieldType, FIELD_TYPE_TO_SLUG } from "@/lib/fields";
 import { generateDayAvailability } from "@/lib/slots";
 import { formatEuro } from "@/lib/pricing";
+import { expireStaleBookings } from "@/lib/bookings";
 import FieldCalendar from "@/components/FieldCalendar";
 
 const FIELD_EMOJI: Record<string, string> = {
@@ -36,6 +37,8 @@ export default async function FieldPage({
 
   const session = await auth();
   const allFields = await prisma.field.findMany({ orderBy: { type: "asc" } });
+
+  await expireStaleBookings();
 
   const bookings = await prisma.booking.findMany({
     where: { fieldId: field.id, date },

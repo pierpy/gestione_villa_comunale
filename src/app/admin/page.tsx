@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 import { STATUS_LABELS, STATUS_STYLES, FIELD_TYPE_LABELS } from "@/lib/status";
+import { expireStaleBookings } from "@/lib/bookings";
 
 export default async function AdminPage({
   searchParams,
@@ -9,6 +10,8 @@ export default async function AdminPage({
   searchParams: Promise<{ fieldType?: string; status?: string; date?: string }>;
 }) {
   const { fieldType, status, date } = await searchParams;
+
+  await expireStaleBookings();
 
   const where: Record<string, unknown> = {};
   if (fieldType) where.field = { type: fieldType };

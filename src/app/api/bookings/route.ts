@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bookingSchema } from "@/lib/validation";
 import { computeDeposit, computeTotalPrice, addMinutesToTime, timeToMinutes } from "@/lib/pricing";
+import { expireStaleBookings } from "@/lib/bookings";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -85,6 +86,8 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+
+  await expireStaleBookings();
 
   const existing = await prisma.booking.findMany({
     where: {
