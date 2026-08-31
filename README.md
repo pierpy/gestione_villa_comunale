@@ -29,8 +29,8 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
 ## Stack tecnico
 
 - [Next.js](https://nextjs.org) (App Router) + TypeScript + Tailwind CSS
-- [Prisma](https://www.prisma.io) + SQLite (facilmente sostituibile con
-  Postgres/MySQL in produzione cambiando `datasource` e `DATABASE_URL`)
+- [Prisma](https://www.prisma.io) + **PostgreSQL** (compatibile con qualsiasi
+  Postgres gestito: Neon, Supabase, Vercel Postgres, RDS, ecc.)
 - [Auth.js / NextAuth v5](https://authjs.dev) (provider Credentials)
 - [Stripe](https://stripe.com) per i pagamenti online
 
@@ -42,27 +42,34 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
    npm install
    ```
 
-2. Copia il file di esempio delle variabili d'ambiente:
+2. Procurati un database Postgres. Il modo più rapido e gratuito è
+   [Neon](https://neon.tech) (nessuna carta richiesta): crea un progetto e
+   copia la connection string.
+
+3. Copia il file di esempio delle variabili d'ambiente:
 
    ```bash
    cp .env.example .env
    ```
 
-   Genera un `AUTH_SECRET` casuale, ad esempio con `openssl rand -base64 32`.
+   Incolla la connection string Postgres in `DATABASE_URL` e genera un
+   `AUTH_SECRET` casuale (`openssl rand -base64 32`, oppure su Windows
+   `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`).
    Le variabili `STRIPE_*` sono opzionali: se lasciate vuote, i pagamenti
    funzionano comunque tramite il flusso demo.
 
-3. Crea il database e applica le migrazioni (crea anche i 3 campi e
-   l'utente amministratore tramite il seed):
+4. Applica lo schema al database e lancia il seed (crea i 3 campi e l'utente
+   amministratore):
 
    ```bash
-   npm run db:migrate
+   npm run db:push
+   npm run db:seed
    ```
 
    Le credenziali dell'amministratore di default sono quelle indicate in
    `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 
-4. Avvia il server di sviluppo:
+5. Avvia il server di sviluppo:
 
    ```bash
    npm run dev
@@ -78,9 +85,41 @@ Comunale di Torre de' Passeri: **calcetto**, **padel** e **tennis**.
 | `npm run build`        | Build di produzione                             |
 | `npm start`            | Avvia il server in produzione (dopo build)      |
 | `npm run lint`         | Esegue ESLint                                   |
-| `npm run db:migrate`   | Applica le migrazioni Prisma e il seed          |
-| `npm run db:seed`      | Esegue solo il seed (campi + admin)             |
+| `npm run db:push`      | Sincronizza lo schema Prisma sul database        |
+| `npm run db:seed`      | Esegue il seed (campi + admin)                  |
 | `npm run db:studio`    | Apre Prisma Studio per ispezionare il database  |
+
+## Mettere online l'app gratuitamente (per farla testare a qualcuno)
+
+Combinazione consigliata: **Neon** (database Postgres gratuito) +
+**Vercel** (hosting gratuito, pensato per Next.js).
+
+1. **Database**: su [neon.tech](https://neon.tech), crea un account gratuito
+   e un nuovo progetto. Copia la connection string mostrata (inizia con
+   `postgresql://...`).
+2. Da locale, punta temporaneamente `DATABASE_URL` in `.env` a quella
+   connection string ed esegui una volta:
+
+   ```bash
+   npm run db:push
+   npm run db:seed
+   ```
+
+   (questo crea le tabelle, i 3 campi e l'utente admin sul database Neon)
+
+3. **Hosting**: su [vercel.com](https://vercel.com), accedi con GitHub e
+   scegli "Add New… → Project", seleziona il repository
+   `gestione_villa_comunale` e il branch
+   `claude/sports-field-booking-app-dhe0yf`.
+4. Prima di premere "Deploy", apri "Environment Variables" e aggiungi le
+   stesse variabili del tuo `.env` (come minimo `DATABASE_URL` con la
+   connection string di Neon, `AUTH_SECRET`, `ADMIN_EMAIL`,
+   `ADMIN_PASSWORD`; `STRIPE_*`/`BANK_*` solo se vuoi provarli online).
+5. Premi "Deploy". Dopo 1-2 minuti Vercel assegna un indirizzo pubblico tipo
+   `https://gestione-villa-comunale.vercel.app` — condividi quel link con il
+   tuo collega.
+
+Ogni push sul branch collegato aggiorna automaticamente il sito online.
 
 ## Configurare Stripe (opzionale)
 

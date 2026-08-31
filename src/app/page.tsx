@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatEuro } from "@/lib/pricing";
 
+export const dynamic = "force-dynamic";
+
 const FIELD_META: Record<
   string,
   { emoji: string; href: string; blurb: string }
