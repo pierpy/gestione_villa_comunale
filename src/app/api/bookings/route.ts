@@ -75,6 +75,20 @@ export async function POST(request: Request) {
     );
   }
 
+  // L'input orario del browser non impedisce sempre di digitare un minuto
+  // fuori dal passo consentito (es. su desktop si può scrivere "14:07"
+  // mentre su mobile la rotellina permette solo i quarti d'ora): verifichiamo
+  // qui che l'orario scelto sia comunque allineato, così il comportamento è
+  // identico su ogni dispositivo.
+  if ((startMinutes - field.openingHour * 60) % field.slotMinutes !== 0) {
+    return NextResponse.json(
+      {
+        error: `L'orario di inizio deve essere un multiplo di ${field.slotMinutes} minuti a partire dall'apertura (es. ${field.openingHour}:00, ${field.openingHour}:${String(field.slotMinutes).padStart(2, "0")}...)`,
+      },
+      { status: 400 }
+    );
+  }
+
   // Margine di tolleranza: uno slot libero può iniziare "adesso" al momento
   // in cui la pagina viene caricata, ma l'utente impiega qualche minuto a
   // scegliere durata e note prima di inviare la richiesta.

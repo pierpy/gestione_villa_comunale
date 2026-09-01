@@ -72,9 +72,29 @@ export default function FieldCalendar({
   }
 
   function handleStartTimeChange(value: string) {
-    setStartTime(value);
-    if (!selectedBlock) return;
-    const remainingMinutes = timeToMinutes(selectedBlock.end) - timeToMinutes(value);
+    if (!selectedBlock || !value) {
+      setStartTime(value);
+      return;
+    }
+
+    // Alcuni browser desktop permettono di digitare un minuto qualsiasi nel
+    // campo orario, mentre su mobile la rotellina nativa propone solo i
+    // valori validi. Arrotondiamo sempre al passo più vicino consentito dal
+    // campo, così il comportamento è identico ovunque.
+    const step = field.slotMinutes;
+    const blockStart = timeToMinutes(selectedBlock.start);
+    const blockEnd = timeToMinutes(selectedBlock.end);
+    const raw = timeToMinutes(value);
+    const stepsFromStart = Math.round((raw - blockStart) / step);
+    const snapped = Math.min(
+      Math.max(blockStart + stepsFromStart * step, blockStart),
+      blockEnd - step
+    );
+    const snappedValue = addMinutesToTime("00:00", snapped);
+
+    setStartTime(snappedValue);
+
+    const remainingMinutes = blockEnd - snapped;
     const maxHours = Math.min(remainingMinutes / 60, MAX_BOOKING_HOURS);
     if (durationHours > maxHours) {
       setDurationHours(Math.max(field.slotMinutes / 60, Math.floor(maxHours * 4) / 4));
