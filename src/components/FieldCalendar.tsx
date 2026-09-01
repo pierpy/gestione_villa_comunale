@@ -13,6 +13,7 @@ interface FieldSummary {
   pricePerHour: number;
   depositPercent: number;
   slotMinutes: number;
+  openingHour: number;
 }
 
 interface Props {
@@ -44,6 +45,26 @@ export default function FieldCalendar({
 
   const selectedBlock = selectedIndex !== null ? blocks[selectedIndex] : null;
 
+  const startTimeOptions = useMemo(() => {
+    if (!selectedBlock) return [];
+    const step = field.slotMinutes;
+    const blockStart = timeToMinutes(selectedBlock.start);
+    const blockEnd = timeToMinutes(selectedBlock.end);
+    const gridStart = field.openingHour * 60;
+    // Gli orari proposti devono essere allineati alla griglia dei quarti
+    // d'ora a partire dall'apertura del campo (come richiesto dal server),
+    // non semplicemente a partire dall'inizio della fascia libera: quella
+    // fascia può iniziare "adesso" a un minuto qualsiasi se il blocco
+    // precedente è appena scaduto.
+    const firstAligned = Math.ceil((blockStart - gridStart) / step) * step + gridStart;
+    const options: string[] = [];
+    for (let minutes = firstAligned; minutes <= blockEnd - step; minutes += step) {
+      if (minutes < blockStart) continue;
+      options.push(addMinutesToTime("00:00", minutes));
+    }
+    return options;
+  }, [selectedBlock, field.slotMinutes, field.openingHour]);
+
   const durationOptions = useMemo(() => {
     if (!selectedBlock || !startTime) return [];
     const remainingMinutes = timeToMinutes(selectedBlock.end) - timeToMinutes(startTime);
@@ -67,34 +88,20 @@ export default function FieldCalendar({
     setError(null);
     setSelectedIndex(index);
     const block = blocks[index];
-    setStartTime(block.start);
+    const step = field.slotMinutes;
+    const gridStart = field.openingHour * 60;
+    const blockStart = timeToMinutes(block.start);
+    const firstAligned = Math.ceil((blockStart - gridStart) / step) * step + gridStart;
+    setStartTime(addMinutesToTime("00:00", firstAligned));
     setDurationHours(field.slotMinutes / 60 >= 1 ? field.slotMinutes / 60 : 1);
   }
 
   function handleStartTimeChange(value: string) {
-    if (!selectedBlock || !value) {
-      setStartTime(value);
-      return;
-    }
+    setStartTime(value);
+    if (!selectedBlock || !value) return;
 
-    // Alcuni browser desktop permettono di digitare un minuto qualsiasi nel
-    // campo orario, mentre su mobile la rotellina nativa propone solo i
-    // valori validi. Arrotondiamo sempre al passo più vicino consentito dal
-    // campo, così il comportamento è identico ovunque.
-    const step = field.slotMinutes;
-    const blockStart = timeToMinutes(selectedBlock.start);
     const blockEnd = timeToMinutes(selectedBlock.end);
-    const raw = timeToMinutes(value);
-    const stepsFromStart = Math.round((raw - blockStart) / step);
-    const snapped = Math.min(
-      Math.max(blockStart + stepsFromStart * step, blockStart),
-      blockEnd - step
-    );
-    const snappedValue = addMinutesToTime("00:00", snapped);
-
-    setStartTime(snappedValue);
-
-    const remainingMinutes = blockEnd - snapped;
+    const remainingMinutes = blockEnd - timeToMinutes(value);
     const maxHours = Math.min(remainingMinutes / 60, MAX_BOOKING_HOURS);
     if (durationHours > maxHours) {
       setDurationHours(Math.max(field.slotMinutes / 60, Math.floor(maxHours * 4) / 4));
@@ -243,15 +250,17 @@ export default function FieldCalendar({
                   <label className="block text-sm font-medium text-slate-700">
                     Orario di inizio
                   </label>
-                  <input
-                    type="time"
+                  <select
                     value={startTime}
-                    min={selectedBlock.start}
-                    max={addMinutesToTime(selectedBlock.end, -field.slotMinutes)}
-                    step={field.slotMinutes * 60}
                     onChange={(e) => handleStartTimeChange(e.target.value)}
                     className="mt-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
-                  />
+                  >
+                    {startTimeOptions.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700">Durata</label>
