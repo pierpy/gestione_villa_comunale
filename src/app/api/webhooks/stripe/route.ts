@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { roundToCents } from "@/lib/pricing";
+import { confirmStripePayment } from "@/lib/bookings";
 
 export async function POST(request: Request) {
   if (!stripe) {
@@ -30,26 +29,7 @@ export async function POST(request: Request) {
     const bookingId = checkoutSession.metadata?.bookingId;
 
     if (paymentId && bookingId) {
-      const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
-      if (payment && payment.status !== "PAID") {
-        await prisma.payment.update({
-          where: { id: paymentId },
-          data: { status: "PAID", paidAt: new Date() },
-        });
-
-        const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-        if (booking) {
-          const newAmountPaid = roundToCents(booking.amountPaid + payment.amount);
-          await prisma.booking.update({
-            where: { id: bookingId },
-            data: {
-              amountPaid: newAmountPaid,
-              status:
-                newAmountPaid >= booking.depositAmount ? "CONFIRMED" : booking.status,
-            },
-          });
-        }
-      }
+      await confirmStripePayment(paymentId, bookingId);
     }
   }
 
